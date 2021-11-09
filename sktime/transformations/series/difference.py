@@ -146,7 +146,12 @@ class Differencer(_SeriesToSeriesTransformer):
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
         fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
-        index = fh.to_absolute(cutoff).to_pandas()
+        if self._Z.index.freqstr is not None:
+            # ensure that
+            index = fh.to_absolute(cutoff, self._Z.index.freqstr).to_pandas()
+        else:
+            index = fh.to_absolute(cutoff).to_pandas()
+
         index_diff = index.difference(self._Z.index)
 
         if index_diff.shape[0] != 0 and not is_contained_by_fitted_z:
@@ -237,8 +242,11 @@ class Differencer(_SeriesToSeriesTransformer):
                 else:
                     cutoff = Z_inv.index[prior_cum_lag + lag]
                 fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
-                index = fh.to_absolute(cutoff).to_pandas()
 
+                if self._Z.index.freqstr is not None:
+                    index = fh.to_absolute(cutoff, self._Z.index.freqstr).to_pandas()
+                else:
+                    index = fh.to_absolute(cutoff).to_pandas()
                 if is_df:
                     prior_n_timepoint_values = _transformed.loc[index, :]
                 else:
@@ -313,3 +321,6 @@ class Differencer(_SeriesToSeriesTransformer):
         Z_inv = self._inverse_transform(Z, X=X)
 
         return Z_inv
+
+    def update(self, y, X=None, update_params=True):
+        self._Z = self._Z.append(y)

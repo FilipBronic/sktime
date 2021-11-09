@@ -281,7 +281,7 @@ class ForecastingHorizon:
             return self._new(relative, is_relative=True)
 
     @lru_cache(typed=True)
-    def to_absolute(self, cutoff):
+    def to_absolute(self, cutoff, freq=None):
         """Return absolute version of forecasting horizon values.
 
         Parameters
@@ -306,7 +306,7 @@ class ForecastingHorizon:
             if is_timestamp:
                 # coerce to pd.Period for reliable arithmetic operations and
                 # computations of time deltas
-                cutoff = _coerce_to_period(cutoff)
+                cutoff = _coerce_to_period(cutoff, freq)
 
             absolute = cutoff + relative
 
