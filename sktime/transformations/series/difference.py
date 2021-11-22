@@ -322,5 +322,6 @@ class Differencer(_SeriesToSeriesTransformer):
 
         return Z_inv
 
-    def update(self, y, X=None, update_params=True):
-        self._Z = self._Z.append(y)
+    def update(self, Z, X=None, update_params=True):
+        self._Z = Z.combine_first(self._Z)
+        return self

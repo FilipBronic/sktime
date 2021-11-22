@@ -416,12 +416,15 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
-                transformer.update(y, X, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
+                t = clone(transformer)
+                t.update(y, X, update_params=update_params)
+                self.steps_[step_idx] = (name, t)
+                y = transformer.transform(y, X)
 
         name, forecaster = self.steps_[-1]
-        forecaster.update(y=y, X=X, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
+        f = clone(forecaster)
+        f.update(y=y, X=X, update_params=update_params)
+        self.steps_[-1] = (name, f)
         return self
 
     def transform(self, Z, X=None):
@@ -441,8 +444,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         zt = check_series(Z)
-        for _, _, transformer in self._iter_transformers():
+        for step_idx, name, transformer in self._iter_transformers():
             zt = transformer.transform(zt, X)
+            print(f"Transformer {transformer} output: \n{zt}\n")
         return zt
 
     def inverse_transform(self, Z, X=None):
