@@ -185,6 +185,7 @@ class Differencer(_SeriesToSeriesTransformer):
         self._Z = Z.copy()
         return self
 
+
     def _transform(self, Z, X=None):
         """Logic used by `transform` to apply transformation to `Z`.
 
@@ -200,7 +201,22 @@ class Differencer(_SeriesToSeriesTransformer):
         Zt : pd.Series or pd.DataFrame
             The transformed timeseries.
         """
-        Zt = _diff_transform(Z, self._lags)
+        # take into account previously seen values if they are available
+        look_back_fh = ForecastingHorizon(np.arange(-1, -(max(self._lags + 1)), -1))
+        look_back_index = look_back_fh.to_absolute(Z.index[0], self._Z.index.freqstr).to_pandas()
+
+        # check if there is atleast one value available before the start of Z
+        intersection = look_back_index.intersection(self._Z.index)
+        if len(intersection) > 0:
+            look_back_Z = self._Z.loc[look_back_index]
+            transform_input_Z = look_back_Z.combine_first(Z)
+        else:
+            transform_input_Z = Z
+
+        Zt = _diff_transform(transform_input_Z, self._lags)
+        Zt = Zt.loc[Z.index]
+        # else:
+        #     Zt = _diff_transform(Z, self._lags)
         if self.drop_na:
             Zt = Zt.iloc[self._cumulative_lags[-1] :]
         return Zt
