@@ -202,7 +202,8 @@ class Differencer(_SeriesToSeriesTransformer):
             The transformed timeseries.
         """
         # take into account previously seen values if they are available
-        look_back_fh = ForecastingHorizon(np.arange(-1, -(max(self._lags + 1)), -1))
+        # look_back_fh = ForecastingHorizon(np.arange(-1, -(max(self._lags + 1) + len(self._lags)), -1))
+        look_back_fh = ForecastingHorizon(np.arange(-1, -(sum(self._lags) + 1), -1))
         look_back_index = look_back_fh.to_absolute(Z.index[0], self._Z.index.freqstr).to_pandas()
 
         # check if there is atleast one value available before the start of Z
@@ -313,7 +314,6 @@ class Differencer(_SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         Z = check_series(Z)
-
         Zt = self._transform(Z, X=X)
 
         return Zt
@@ -335,7 +335,6 @@ class Differencer(_SeriesToSeriesTransformer):
         Z = check_series(Z)
 
         Z_inv = self._inverse_transform(Z, X=X)
-
         return Z_inv
 
     def update(self, Z, X=None, update_params=True):
